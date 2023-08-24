@@ -1,90 +1,56 @@
-import React, { Component } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ContactForm } from './contactForm/ContactForm';
 import { ContactsList } from './contactsList/ContactsList';
 import { Filter } from './filter/Filter';
 import toast, { Toaster } from 'react-hot-toast';
 import css from 'APP.module.css';
 
-const LS_KEY = 'Contacts';
+export function App() {
+  const [contacts, setContacts] = useState(
+    () => JSON.parse(localStorage.getItem('contacts')) ?? []
+  );
+  const [filter, setFilter] = useState('');
 
-export class App extends Component {
-  state = {
-    contacts: [],
-    filter: '',
-  };
+  useEffect(() => {
+    localStorage.setItem('contacts', JSON.stringify(contacts));
+  }, [contacts]);
 
-  componentDidMount() {
-    const savedContacts = localStorage.getItem(LS_KEY);
-    const parsedContacts = JSON.parse(savedContacts);
-
-    if (parsedContacts) {
-      this.setState(() => ({ contacts: parsedContacts }));
-    }
-  }
-
-  componentDidUpdate(_, prevState) {
-    const prevContacts = prevState.contacts;
-    const currentContacts = this.state.contacts;
-    if (prevContacts !== currentContacts) {
-      localStorage.setItem(LS_KEY, JSON.stringify(currentContacts));
-    }
-  }
-
-  formSubmitHandler = data => {
-    console.log(data);
-  };
-  handleAddContact = contact => {
-    if (this.state.contacts.some(item => item.name === contact.name)) {
+  const handleAddContact = contact => {
+    if (contacts.some(item => item.name === contact.name)) {
       toast.error('Contact already exists');
       return true;
     }
-    this.setState(prevState => {
-      return {
-        contacts: [...prevState.contacts, contact],
-      };
-    });
+    setContacts(prevState => [...prevState, contact]);
     return false;
   };
 
-  handleDeleteContact = id => {
-    this.setState(prevState => {
-      return {
-        contacts: prevState.contacts.filter(contact => contact.id !== id),
-      };
+  const handleDeleteContact = id => {
+    setContacts(prevState => {
+      return prevState.filter(contact => contact.id !== id);
     });
   };
 
-  handleChangeFilter = event => {
-    this.setState({ filter: event.target.value });
+  const handleChangeFilter = event => {
+    setFilter(event.target.value);
   };
 
-  handleFilterContacts = () => {
-    return this.state.contacts.filter(contact =>
-      contact.name
-        .toLowerCase()
-        .includes(this.state.filter.toLowerCase().trim())
+  const handleFilterContacts = () => {
+    return contacts.filter(contact =>
+      contact.name.toLowerCase().includes(filter.toLowerCase().trim())
     );
   };
 
-  render() {
-    return (
-      <div className={css.wraper}>
-        <h1>Phonebook</h1>
-        <ContactForm
-          onSubmit={this.formSubmitHandler}
-          addContact={this.handleAddContact}
-        />
-        <Filter
-          value={this.state.filter}
-          handleChange={this.handleChangeFilter}
-        />
-        <h2>Contacts</h2>
-        <ContactsList
-          contacts={this.handleFilterContacts()}
-          deleteContact={this.handleDeleteContact}
-        />
-        <Toaster />
-      </div>
-    );
-  }
+  return (
+    <div className={css.wraper}>
+      <h1>Phonebook</h1>
+      <ContactForm addContact={handleAddContact} />
+      <Filter value={filter} handleChange={handleChangeFilter} />
+      <h2>Contacts</h2>
+      <ContactsList
+        contacts={handleFilterContacts()}
+        deleteContact={handleDeleteContact}
+      />
+      <Toaster />
+    </div>
+  );
 }
