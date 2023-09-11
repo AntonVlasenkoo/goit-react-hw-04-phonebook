@@ -16,7 +16,11 @@ export function App() {
   }, [contacts]);
 
   const handleAddContact = contact => {
-    if (contacts.some(item => item.name === contact.name)) {
+    if (
+      contacts.some(
+        item => item.name.toLowerCase() === contact.name.toLowerCase()
+      )
+    ) {
       toast.error('Contact already exists');
       return true;
     }
